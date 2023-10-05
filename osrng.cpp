@@ -52,6 +52,7 @@
 #endif
 #if defined(USE_MS_CRYPTOAPI)
 #include <wincrypt.h>
+#include <VersionHelpers.h>
 #ifndef CRYPT_NEWKEYSET
 # define CRYPT_NEWKEYSET 0x00000008
 #endif
@@ -206,7 +207,11 @@ void NonblockingRng::GenerateBlock(byte *output, size_t size)
 		SetLastError(ERROR_INCORRECT_SIZE);
 		throw OS_RNG_Err("GenerateBlock size");
 	}
+	#if WINVER >= 0x0A00 
+	NTSTATUS ret = BCryptGenRandom(BCRYPT_RNG_ALG_HANDLE, output, ulSize, 0);
+	#else
 	NTSTATUS ret = BCryptGenRandom(hProvider.GetProviderHandle(), output, ulSize, 0);
+	#endif
 	CRYPTOPP_ASSERT(BCRYPT_SUCCESS(ret));
 	if (!(BCRYPT_SUCCESS(ret)))
 	{
